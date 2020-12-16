@@ -21,10 +21,6 @@ namespace CP77_depack_save
          * 4 Bytes: Size uncompressed
          * 4 Bytes: End of block (Uninmported with this method)
          * 
-         * Last block:
-         * 4 Bytes: Size compressed
-         * 4 Bytes: Size uncompressed
-         * 
          */
 
         public string HeaderFilePath { get; set; }
