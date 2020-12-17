@@ -30,16 +30,19 @@ namespace CP77_depack_save
             {
                 if(input.Length != Info.SizeCompressed)
                 {
-                    //throw new Exception("Block size mismatch with header size");
+                    //Last blocksize missmatches
+                    //throw new Exception("Block size missmatch with header size");
                 }
 
                 using(BinaryReader compressedDataStream = new BinaryReader(input,Encoding.UTF8, true))
                 {
                     byte[] compressedData = new byte[Info.SizeCompressed-8];
                     byte[] uncompressedData = new byte[Info.SizeUncompressed];
-                    byte[] identifier = new byte[8];
+                    byte[] identifier = new byte[4];
+                    Int32 uncompressedSize;
 
                     compressedDataStream.Read(identifier);
+                    uncompressedSize = compressedDataStream.ReadInt32();
                     compressedDataStream.Read(compressedData);
 
                     int uncompressed_bytes = LZ4Codec.Decode(compressedData, uncompressedData);

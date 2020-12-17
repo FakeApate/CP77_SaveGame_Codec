@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using K4os.Compression.LZ4;
 
 namespace CP77_depack_save
 {
@@ -23,10 +22,9 @@ namespace CP77_depack_save
                 dataFilePath = value;
             }
         }
-
-        
         public string ImageFilePath { get; set; }
 
+        public static int BLOCKSIZE = 262144; //265kb
 
         private string dataFilePath;
         private DirectoryInfo splitDir;
@@ -55,8 +53,7 @@ namespace CP77_depack_save
             header.Read();
 
             decompressBlocks(header.getblockList());
-            
-           
+        
         }
 
         private int depackSave(Stream data)
@@ -107,14 +104,14 @@ namespace CP77_depack_save
 
         private void decompressBlocks(LinkedList<Header.BlockInfo> blocks)
         {
-            File.Delete(splitDir + "/sav.bin");
+            File.Delete(outputDir + "/sav.bin");
             while (blocks.Count > 0)
             {
                 Header.BlockInfo info = blocks.First.Value;
                 
                 string compressedBlockFilePath = splitDir + "/part" + info.blockPart.ToString() + ".dat";
                 string unompressedBlockFilePath = splitDir + "/part" + info.blockPart.ToString() + ".bin";
-                string unompressedSaveFilePath = splitDir + "/sav.bin";
+                string unompressedSaveFilePath = outputDir + "/sav.bin";
                 Block block = new Block { CompressedBlockFilePath = compressedBlockFilePath, UncompressedBlockFilePath = unompressedBlockFilePath, Info = info, unompressedSaveFilePath = unompressedSaveFilePath };
                 block.Read();
 
@@ -122,6 +119,116 @@ namespace CP77_depack_save
             }
         }
 
-    
+        /*
+         * 
+         * Testing Phase
+         * 
+         * 
+         * 
+         */
+        public void Write()
+        {
+            string uncompressedFilePath  = outputDir + "/sav.bin";
+            string compressedFilePath = outputDir + "/resav.dat";
+            File.Delete(compressedFilePath);
+
+            LinkedList<Header.BlockInfo> blocks = new LinkedList<Header.BlockInfo>();
+            MemoryStream dataStream = new MemoryStream();
+            using(FileStream input = File.OpenRead(uncompressedFilePath))
+            using(BinaryReader reader = new BinaryReader(input, Encoding.UTF8, true))
+            using(BinaryWriter writer = new BinaryWriter(dataStream, Encoding.UTF8, true))
+            {
+                
+                long filelength = input.Length;
+                byte[] buffer = new byte[BLOCKSIZE];
+                byte[] compressedBuffer = new byte[K4os.Compression.LZ4.LZ4Codec.MaximumOutputSize(BLOCKSIZE)];
+                byte[] identifier = { 0x34, 0x5A, 0x4C, 0x58 };
+
+                //Calculating amount of chunks
+                int cFullChunks = (int)(filelength / (long)BLOCKSIZE);
+                int sizeLastChunk = (int)(filelength % (long)BLOCKSIZE);
+
+                K4os.Compression.LZ4.LZ4Level compLevel = K4os.Compression.LZ4.LZ4Level.L00_FAST;
+                for (int i = 0; i < cFullChunks; i++){
+                    writer.Write(identifier);
+                    writer.Write((Int32)BLOCKSIZE);
+                    reader.Read(buffer);
+                    
+                    int compressedBytes = K4os.Compression.LZ4.LZ4Codec.Encode(buffer, 0, buffer.Length, compressedBuffer, 0, compressedBuffer.Length,compLevel);
+                    if(compressedBytes == -1)
+                    {
+                        throw new Exception("compressing chunk failed");
+                    }
+                    blocks.AddLast(new Header.BlockInfo { SizeCompressed = (UInt32)compressedBytes+8, SizeUncompressed = (UInt32)BLOCKSIZE });
+                    writer.Write(compressedBuffer, 0,compressedBytes);
+                }
+
+                if(sizeLastChunk > 0)
+                {
+                    writer.Write(identifier);
+                    writer.Write((Int32)sizeLastChunk);
+                    reader.Read(buffer);
+
+                    int compressedBytes = K4os.Compression.LZ4.LZ4Codec.Encode(buffer, 0, sizeLastChunk, compressedBuffer, 0, compressedBuffer.Length, compLevel);
+                    if (compressedBytes == -1)
+                    {
+                        throw new Exception("compressing chunk failed");
+                    }
+                    blocks.AddLast(new Header.BlockInfo { SizeCompressed = (UInt32)compressedBytes + 8, SizeUncompressed = (UInt32)sizeLastChunk });
+                    writer.Write(compressedBuffer, 0,compressedBytes);
+                }
+
+                
+
+            }
+
+            
+            using (FileStream output = File.OpenWrite(compressedFilePath))
+            using (BinaryWriter writer = new BinaryWriter(output, Encoding.UTF8, true))
+            {
+                byte[] magic = { 0x56, 0x41, 0x53, 0x43 };
+                UInt32 saveVersion = 193;
+                UInt32 gameVersion = 8;
+                byte[] unknownData = {0x00, 0x7D, 0xB2, 0x22, 0x00, 0x00, 0xB8, 0x45, 0x7E, 0xC3, 0x00, 0x00, 0x00};
+                byte[] magic2 = { 0x46, 0x5A, 0x4C, 0x43 };
+                Int32 nBlocks = blocks.Count;
+                Int32 sizeOfHeader = 3105;
+                int sizeOfData = magic.Length + unknownData.Length + magic2.Length + 2 * sizeof(UInt32) + blocks.Count * 3 * sizeof(UInt32);
+                int currentSize = sizeOfHeader;
+                Header.BlockInfo info;
+                byte[] spacer = new byte[sizeOfHeader - sizeOfData];
+                Array.Fill<byte>(spacer, 0x00);
+
+                writer.Write(magic);
+                writer.Write(saveVersion);
+                writer.Write(gameVersion);
+                writer.Write(unknownData);
+                writer.Write(magic2);
+                writer.Write(nBlocks);
+                writer.Write(sizeOfHeader);
+
+                while(blocks.Count > 1)
+                {
+                    info = blocks.First.Value;
+                    writer.Write((UInt32)info.SizeCompressed);
+                    writer.Write((UInt32)info.SizeUncompressed);
+                    writer.Write((UInt32)(currentSize + info.SizeCompressed));
+                    blocks.RemoveFirst();
+                    currentSize += (int)info.SizeCompressed;
+                }
+
+                info = blocks.First.Value;
+                writer.Write((UInt32)info.SizeCompressed);
+                writer.Write((UInt32)info.SizeUncompressed);
+                writer.Write(0x00000000);
+                writer.Write(spacer);
+                writer.Write(dataStream.ToArray());
+                dataStream.Close();
+            }
+
+
+
+        }
+
     }
 }

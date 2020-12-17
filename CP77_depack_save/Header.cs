@@ -10,8 +10,11 @@ namespace CP77_depack_save
     {
         /*
          * Structure:
-         * 4 Bytes: "VASC"
-         * 21 Bytes: Unknown 
+         * 4 Bytes: "VASC" / "EVAS"
+         * 4 Bytes: Save Version
+         * 4 Bytes: Game Version
+         * 7 Bytes: Unknown 
+         * 6 Bytes: 45 7E C3 00 00 00 Unknown Function
          * 4 Bytes: "FZLC"
          * 4 Bytes: Number of blocks following
          * 4 Bytes: Size of Header (this)
@@ -26,11 +29,14 @@ namespace CP77_depack_save
         public string HeaderFilePath { get; set; }
         public int SplittedParts { get; set; }
 
-        private static string HEADERINFOSTART = "VASC";
+        private static string HEADERINFOSTART1 = "VASC";
+        private static string HEADERINFOSTART2 = "EVAS";
         private static string HEADERINFOEND = "FZLC";
         
-        private byte[] unknown = new byte[21];
+        private byte[] unknown = new byte[13];
 
+        private UInt32 gameVersion;
+        private UInt32 saveVersion;
         private UInt32 numberOf_blocks;
         private UInt32 sizeOf_Header;
 
@@ -51,10 +57,14 @@ namespace CP77_depack_save
 
                     //INFO START
                     string info = new string(reader.ReadChars(4));
-                    if (  info != HEADERINFOSTART)
+                    if (  info != HEADERINFOSTART1 && info != HEADERINFOSTART2)
                     {
                         throw new Exception("Headerfile corrupted");
                     }
+
+                    
+                    saveVersion = reader.ReadUInt32();
+                    gameVersion = reader.ReadUInt32();
 
                     //Unknown
                     reader.Read(unknown);

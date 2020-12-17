@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CP77_depack_save", "CP77_depack_save\CP77_depack_save.csproj", "{EE20C02C-A0D6-4A4D-8DBD-3D80A4B12207}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CP77_depack_save", "CP77_depack_save\CP77_depack_save.csproj", "{EE20C02C-A0D6-4A4D-8DBD-3D80A4B12207}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
