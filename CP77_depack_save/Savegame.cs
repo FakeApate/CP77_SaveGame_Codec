@@ -189,11 +189,12 @@ namespace CP77_depack_save
                 byte[] magic = { 0x56, 0x41, 0x53, 0x43 };
                 UInt32 saveVersion = 193;
                 UInt32 gameVersion = 8;
-                byte[] unknownData = {0x00, 0x7D, 0xB2, 0x22, 0x00, 0x00, 0xB8, 0x45, 0x7E, 0xC3, 0x00, 0x00, 0x00};
+                byte[] unknownData = { 0x00, 0xD8, 0x37, 0x88, 0x03, 0x00, 0xC0 };
+                byte[] unknownConstant = { 0x45, 0x7E, 0xC3, 0x00, 0x00, 0x00 };
                 byte[] magic2 = { 0x46, 0x5A, 0x4C, 0x43 };
                 Int32 nBlocks = blocks.Count;
                 Int32 sizeOfHeader = 3105;
-                int sizeOfData = magic.Length + unknownData.Length + magic2.Length + 2 * sizeof(UInt32) + blocks.Count * 3 * sizeof(UInt32);
+                int sizeOfData = 0x25 + (blocks.Count * 3 * sizeof(UInt32));
                 int currentSize = sizeOfHeader;
                 Header.BlockInfo info;
                 byte[] spacer = new byte[sizeOfHeader - sizeOfData];
@@ -203,6 +204,7 @@ namespace CP77_depack_save
                 writer.Write(saveVersion);
                 writer.Write(gameVersion);
                 writer.Write(unknownData);
+                writer.Write(unknownConstant);
                 writer.Write(magic2);
                 writer.Write(nBlocks);
                 writer.Write(sizeOfHeader);

@@ -11,7 +11,7 @@ namespace CP77_depack_save
     {
         static void Main(string[] args)
         {       
-            Savegame save = new Savegame { DataFilePath = @"C:\Users\Sam\Documents\CP Save Editing\Saves\ManualSave-3\sav.dat" };
+            Savegame save = new Savegame { DataFilePath = @"C:\Users\Sam\Documents\CP Save Editing\Saves\SaveFail\sav.dat" };
             save.Read();
             save.Write();
         }
