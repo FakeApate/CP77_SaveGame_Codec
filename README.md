@@ -1,3 +1,3 @@
-# CP77_depack_save
+# CP77_SaveGame_Codec
 ### Is it working?
 Maybe - Maybe not ;)
