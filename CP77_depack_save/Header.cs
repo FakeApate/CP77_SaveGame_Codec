@@ -26,94 +26,86 @@ namespace CP77_depack_save
          * 
          */
 
-        public string HeaderFilePath { get; set; }
-        public int SplittedParts { get; set; }
+        public string HeaderFilePath { get { return headerFilePath; } }
+        public int SplittedParts { get { return splittedParts; } }
+        public int GameVersion {  get { return (int)gameVersion; } }
+        public int SaveVersion {  get { return (int)saveVersion; } }
+        public int NumberOfBlocks {  get { return (int)numberOfBlocks; } }
 
-        private static string HEADERINFOSTART1 = "VASC";
-        private static string HEADERINFOSTART2 = "EVAS";
-        private static string HEADERINFOEND = "FZLC";
-        
+        private string headerFilePath;
+        private int splittedParts;
+        private LinkedList<BlockInfo> blocks = new LinkedList<BlockInfo>();
+
         private byte[] unknown = new byte[13];
-
         private UInt32 gameVersion;
         private UInt32 saveVersion;
-        private UInt32 numberOf_blocks;
-        private UInt32 sizeOf_Header;
+        private UInt32 numberOfBlocks;
 
-        private LinkedList<BlockInfo> blocks = new LinkedList<BlockInfo>();
+        public Header(string _path, int _splitted)
+        {
+            if (!File.Exists(_path)) throw new FileNotFoundException("Headerfile not found.", _path);
+            headerFilePath = _path;
+
+            if (_splitted < 1) throw new Exception(" Invalid number of blocks");
+            splittedParts = _splitted;
+        }
 
         public void Read()
         {
-            if (!File.Exists(HeaderFilePath))
+            using (FileStream input = File.OpenRead(headerFilePath))
+            using (BinaryReader reader = new BinaryReader(input, Encoding.UTF8, true))
             {
-                throw new FileNotFoundException("Headerfile not found.", HeaderFilePath);
-            }
-
-            using (FileStream input = File.OpenRead(HeaderFilePath))
-            {
-                using(BinaryReader reader = new BinaryReader(input, Encoding.UTF8, true))
+                //INFO START
+                string headerInfo = new string(reader.ReadChars(4));
+                if (headerInfo != Constant.HEADER_INFO_START && headerInfo != Constant.HEADER_INFO_START_ALTERNATIVE)
                 {
-                    //Start of Protocoll
-
-                    //INFO START
-                    string info = new string(reader.ReadChars(4));
-                    if (  info != HEADERINFOSTART1 && info != HEADERINFOSTART2)
-                    {
-                        throw new Exception("Headerfile corrupted");
-                    }
-
-                    
-                    saveVersion = reader.ReadUInt32();
-                    gameVersion = reader.ReadUInt32();
-
-                    //Unknown
-                    reader.Read(unknown);
-
-                    //INFO END
-                    info = new string(reader.ReadChars(4));
-                    if (info != HEADERINFOEND)
-                    {
-                        throw new Exception("Headerfile corrupted");
-                    }
-
-                    //Number of blocks
-                    numberOf_blocks = reader.ReadUInt32();
-                    if(SplittedParts != numberOf_blocks)
-                    {
-                        throw new Exception("Number of splitted Parts mismatches with header info");
-                    }
-
-                    //Size of Header
-                    sizeOf_Header = reader.ReadUInt32();
-                    if(sizeOf_Header != input.Length)
-                    {
-                        throw new Exception("Actuall Size mismatches with Header Size");
-                    }
-
-                    //blocks
-                    int blockPart = 1;
-                    UInt32 blockOffset;                  
-                    do
-                    {
-                        blocks.AddLast(new BlockInfo
-                        {
-                            blockPart = blockPart++,
-                            SizeCompressed = reader.ReadUInt32(),
-                            SizeUncompressed = reader.ReadUInt32()
-                        });
-
-                        //block Offset
-                        blockOffset = reader.ReadUInt32();
-
-                    } while (blockOffset > 0);
-
-
+                    throw new Exception("Headerfile corrupted");
                 }
 
+                //GAME&SAVE VERSION
+                saveVersion = reader.ReadUInt32();
+                gameVersion = reader.ReadUInt32();
+
+                //UNKNOWN DATA
+                reader.Read(unknown);
+
+                //INFO END
+                headerInfo = new string(reader.ReadChars(4));
+                if (headerInfo != Constant.HEADER_INFO_END)
+                {
+                    throw new Exception("Headerfile corrupted");
+                }
+
+                //BLOCK COUNT
+                numberOfBlocks = reader.ReadUInt32();
+                if (splittedParts != numberOfBlocks)
+                {
+                    throw new Exception("Number of splitted Parts mismatches with header info");
+                }
+
+                //HEADER BYTE SIZE
+                UInt32 sizeOf_Header = reader.ReadUInt32();
+                if (sizeOf_Header != input.Length)
+                {
+                    throw new Exception("Actuall Size mismatches with Header Size");
+                }
+
+                //BLOCKS
+                int blockPart = 1;
+                BlockInfo blockInfo;
+                do
+                {
+                    blockInfo = new BlockInfo
+                    {
+                        BlockPart = blockPart++,
+                        SizeCompressed = reader.ReadUInt32(),
+                        SizeUncompressed = reader.ReadUInt32(),
+                        BlockEndOffset = reader.ReadUInt32()
+                    };
+                    blocks.AddLast(blockInfo);
+
+                } while (blockInfo.BlockEndOffset > 0);
             }
-
-
-
         }
 
         public LinkedList<BlockInfo> getblockList () {
@@ -128,13 +120,7 @@ namespace CP77_depack_save
 
             return newList;
         }
-        public struct BlockInfo
-        {
-            public UInt32 SizeCompressed { get; set; }
-            public UInt32 SizeUncompressed { get; set; }
-            public int blockPart { get; set; }
-
-        }
+        
 
     }
 }

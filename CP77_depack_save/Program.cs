@@ -10,8 +10,8 @@ namespace CP77_depack_save
     class Program
     {
         static void Main(string[] args)
-        {       
-            Savegame save = new Savegame { DataFilePath = @"C:\Users\Sam\Documents\CP Save Editing\Saves\SaveFail\sav.dat" };
+        {
+            Savegame save = new Savegame(_data: @"C:\Users\Sam\Documents\CP Save Editing\Saves\SaveFail\sav.dat");
             save.Read();
             save.Write();
         }
