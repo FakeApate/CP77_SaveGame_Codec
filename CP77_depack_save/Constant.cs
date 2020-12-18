@@ -1,4 +1,4 @@
-﻿namespace CP77_depack_save
+﻿namespace CP77SaveCodec
 {
      static class Constant
     {

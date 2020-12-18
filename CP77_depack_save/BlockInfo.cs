@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CP77_depack_save
+namespace CP77SaveCodec
 {
     public struct BlockInfo
     {

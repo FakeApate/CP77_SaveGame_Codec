@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using K4os.Compression.LZ4;
 
-namespace CP77_depack_save
+namespace CP77SaveCodec
 {
     //TODO: Minimize explicit casting
     class Savegame

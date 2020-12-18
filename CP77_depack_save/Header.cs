@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace CP77_depack_save
+namespace CP77SaveCodec
 {
 
     class Header
