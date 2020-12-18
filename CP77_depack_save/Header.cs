@@ -31,6 +31,7 @@ namespace CP77SaveCodec
         public int GameVersion {  get { return (int)gameVersion; } }
         public int SaveVersion {  get { return (int)saveVersion; } }
         public int NumberOfBlocks {  get { return (int)numberOfBlocks; } }
+        public byte[] Unknown {  get { return unknown; } }
 
         private string headerFilePath;
         private int splittedParts;

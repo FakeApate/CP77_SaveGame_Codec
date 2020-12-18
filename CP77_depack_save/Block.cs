@@ -32,7 +32,7 @@ namespace CP77SaveCodec
                 if (input.Length != Info.SizeCompressed)
                 {
                     //Last blocksize missmatches,makes checking impossible
-                    //throw new Exception("Block size missmatch with header size");
+                    throw new Exception("Block size missmatch with header size");
                 }
 
                 byte[] compressedData = new byte[Info.SizeCompressed - 8];

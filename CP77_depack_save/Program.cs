@@ -11,7 +11,7 @@ namespace CP77SaveCodec
     {
         static void Main(string[] args)
         {
-            Savegame save = new Savegame(_data: @"C:\Users\Sam\Documents\CP Save Editing\Saves\SaveFail\sav.dat");
+            Savegame save = new Savegame(_data: @"C:\Users\Sam\Documents\CP Save Editing\Saves\ManualSave-10\sav.dat");
             save.Read();
             save.Write();
         }
